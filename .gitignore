@@ -1,0 +1,18 @@
+# Java (Maven)
+target/
+*.log
+*.class
+
+# Node.js
+node_modules/
+dist/
+
+# VSCode
+.vscode/
+
+# IntelliJ
+.idea/
+
+# Sistema Operativo
+.DS_Store
+Thumbs.db

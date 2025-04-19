@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Estilo extra para a tabela */
+table {
+  border-collapse: collapse;
+}
+
+thead {
+  background-color: #f3f4f6; /* cinza claro */
+}
+
+tbody tr:nth-child(odd) {
+  background-color: #f9fafb; /* zebra */
+}
+
+tbody tr:hover {
+  background-color: #e5e7eb; /* hover highlight */
+}
+
+td, th {
+  padding: 0.75rem;
+  text-align: left;
+}

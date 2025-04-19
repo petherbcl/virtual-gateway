@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Clientes Ligados</title>
+    <script>
+        async function fetchClients() {
+            const response = await fetch('/api/clients');
+            const clients = await response.json();
+
+            const tableBody = document.getElementById('clients-table-body');
+            tableBody.innerHTML = '';
+
+            clients.forEach(client => {
+                const row = document.createElement('tr');
+
+                const idCell = document.createElement('td');
+                idCell.innerText = client.id;
+
+                const timeCell = document.createElement('td');
+                timeCell.innerText = client.connectedAt;
+
+                row.appendChild(idCell);
+                row.appendChild(timeCell);
+
+                tableBody.appendChild(row);
+            });
+        }
+
+        setInterval(fetchClients, 3000);
+        window.onload = fetchClients;
+    </script>
+</head>
+<body>
+    <h1>Clientes TCP Ligados</h1>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>UUID</th>
+                <th>Hora de Ligação</th>
+            </tr>
+        </thead>
+        <tbody id="clients-table-body"></tbody>
+    </table>
+</body>
+</html>
