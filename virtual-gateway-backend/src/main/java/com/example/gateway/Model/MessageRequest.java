@@ -1,4 +1,4 @@
-package com.example.gateway;
+package com.example.gateway.Model;
 
 public class MessageRequest {
     private String id;

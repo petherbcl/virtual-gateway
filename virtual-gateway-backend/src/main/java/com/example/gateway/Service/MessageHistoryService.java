@@ -1,12 +1,14 @@
-package com.example.gateway;
-
-import org.springframework.stereotype.Service;
+package com.example.gateway.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.springframework.stereotype.Service;
+
+import com.example.gateway.Model.MessageRecord;
 
 @Service
 public class MessageHistoryService {

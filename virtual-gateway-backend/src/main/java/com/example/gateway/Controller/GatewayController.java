@@ -1,4 +1,4 @@
-package com.example.gateway;
+package com.example.gateway.Controller;
 
 import java.io.OutputStream;
 import java.util.List;
@@ -13,6 +13,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.example.gateway.Model.ClientConnection;
+import com.example.gateway.Model.ClientInfo;
+import com.example.gateway.Model.MessageRecord;
+import com.example.gateway.Model.MessageRequest;
+import com.example.gateway.Model.MessageTypeRequest;
+import com.example.gateway.Service.MessageHistoryService;
+import com.example.gateway.TcpGatewayServer;
 
 @RestController
 @RequestMapping("/api")

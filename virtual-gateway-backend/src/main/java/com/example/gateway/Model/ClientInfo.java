@@ -1,4 +1,4 @@
-package com.example.gateway;
+package com.example.gateway.Model;
 
 public class ClientInfo {
     private String id;

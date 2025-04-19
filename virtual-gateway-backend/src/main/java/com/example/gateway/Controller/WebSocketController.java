@@ -1,9 +1,11 @@
-package com.example.gateway;
+package com.example.gateway.Controller;
+
+import java.util.UUID;
 
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
-import java.util.UUID;
+import com.example.gateway.Model.ClientEvent;
 
 @Controller
 public class WebSocketController {

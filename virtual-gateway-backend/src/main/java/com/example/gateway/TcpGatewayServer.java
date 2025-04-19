@@ -8,6 +8,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import com.example.gateway.Controller.WebSocketController;
+import com.example.gateway.Model.ClientConnection;
+
 public class TcpGatewayServer {
 
     private static final int TCP_PORT = 12345;

@@ -1,4 +1,4 @@
-package com.example.gateway;
+package com.example.gateway.Model;
 
 import java.net.Socket;
 import java.time.LocalDateTime;
