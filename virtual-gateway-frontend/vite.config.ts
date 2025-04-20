@@ -3,6 +3,10 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
+  define: {
+    // faz com que `global` exista e aponte para window
+    global: "window"
+  },
   server: {
     port: 5173,
     proxy: {

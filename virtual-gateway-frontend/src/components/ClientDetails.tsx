@@ -2,6 +2,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
+import SockJS from "sockjs-client";
+import { Client as StompClient, Frame } from "@stomp/stompjs";
 
 interface MessageRecord {
   timestamp: string;
@@ -19,14 +21,11 @@ export default function ClientDetails() {
     if (!id) return;
     try {
       setIsSending(true);
-      await axios.post("/api/sendMessageType", {
-        id: id,
-        type: type
-      });
+      await axios.post("/api/sendMessageType", { id, type });
       toast.success(`Mensagem '${type}' enviada!`);
-      fetchHistory();
     } catch (error) {
-      toast.error("Erro ao enviar mensagem.");
+      console.error("Erro ao enviar mensagem:", error);
+      toast.error("Falha ao enviar mensagem");
     } finally {
       setIsSending(false);
     }
@@ -39,25 +38,24 @@ export default function ClientDetails() {
       setHistory(res.data);
     } catch (error) {
       console.error("Erro ao buscar histórico:", error);
+      toast.error("Falha ao buscar histórico");
     }
-  };
-
-  const handleBack = () => {
-    navigate("/");
   };
 
   useEffect(() => {
     fetchHistory();
 
-    const ws = new WebSocket("ws://localhost:8090/ws");
+    // STOMP over SockJS
+    const socket = new SockJS("http://localhost:8090/ws");
+    const stompClient = new StompClient({
+      webSocketFactory: () => socket,
+      reconnectDelay: 5000,
+    });
 
-    ws.onopen = () => {
-      console.log("Ligado ao WebSocket (detalhes)");
-    };
-
-    ws.onmessage = (message) => {
-      try {
-        const event = JSON.parse(message.data);
+    stompClient.onConnect = () => {
+      console.log("STOMP conectado (detalhes)");
+      stompClient.subscribe("/topic/clients", msg => {
+        const event = JSON.parse(msg.body);
         if (event.clientId === id) {
           if (event.type === "disconnected") {
             setIsConnected(false);
@@ -67,87 +65,81 @@ export default function ClientDetails() {
             toast.success("Cliente voltou a ligar!");
           }
         }
-      } catch (err) {
-        console.error("Erro ao processar mensagem WebSocket:", err);
-      }
+      });
     };
 
-    ws.onerror = (err) => {
-      console.error("Erro no WebSocket:", err);
+    stompClient.onStompError = (frame: Frame) => {
+      console.error("STOMP error (detalhes):", frame);
     };
 
+    stompClient.activate();
     return () => {
-      ws.close();
+      stompClient.deactivate();
     };
   }, [id]);
 
+  const handleBack = () => {
+    navigate("/");
+  };
 
   return (
     <div className="bg-white p-6 rounded shadow">
       <h2 className="text-2xl font-bold mb-6">Detalhes do Cliente</h2>
       <p className="mb-4"><strong>UUID:</strong> {id}</p>
-
       <div className="mb-6">
         <span className={`inline-block px-3 py-1 rounded-full text-white ${isConnected ? "bg-green-500" : "bg-red-500"}`}>
           {isConnected ? "Ligado" : "Desligado"}
         </span>
       </div>
-
       <div className="flex flex-col gap-4 mb-8">
         <button
           disabled={isSending || !isConnected}
           onClick={() => sendMessageType("NEW_DEVICE")}
           className={`px-4 py-2 ${isConnected ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-400"} text-white rounded transition`}
         >
-          {isSending ? "A enviar..." : "Novo Dispositivo"}
+          Novo Dispositivo
         </button>
         <button
           disabled={isSending || !isConnected}
           onClick={() => sendMessageType("DEVICE_REMOVED")}
-          className={`px-4 py-2 ${isConnected ? "bg-yellow-500 hover:bg-yellow-600" : "bg-gray-400"} text-white rounded transition`}
+          className={`px-4 py-2 ${isConnected ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-400"} text-white rounded transition`}
         >
-          {isSending ? "A enviar..." : "Dispositivo Removido"}
+          Remover Dispositivo
         </button>
         <button
           disabled={isSending || !isConnected}
           onClick={() => sendMessageType("DEVICE_DELETED")}
-          className={`px-4 py-2 ${isConnected ? "bg-red-600 hover:bg-red-700" : "bg-gray-400"} text-white rounded transition`}
+          className={`px-4 py-2 ${isConnected ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-400"} text-white rounded transition`}
         >
-          {isSending ? "A enviar..." : "Dispositivo Apagado"}
-        </button>
-
-        <button
-          onClick={handleBack}
-          className="mt-8 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition"
-        >
-          Voltar
+          Eliminar Dispositivo
         </button>
       </div>
-
-      <div className="mt-8">
-        <h3 className="text-xl font-semibold mb-4">Histórico de Mensagens</h3>
-        {history.length > 0 ? (
-          <div className="overflow-x-auto rounded-lg shadow-md">
-            <table className="w-full text-sm text-gray-700">
-              <thead>
-                <tr className="bg-gray-200">
-                  <th className="p-2">Data e Hora</th>
-                  <th className="p-2">Mensagem</th>
+      {history.length > 0 ? (
+        <div className="overflow-x-auto">
+          <table className="w-full table-auto">
+            <thead>
+              <tr>
+                <th className="text-left p-2">Timestamp</th>
+                <th className="text-left p-2">Mensagem</th>
+              </tr>
+            </thead>
+            <tbody>
+              {history.map((record, index) => (
+                <tr key={index} className="hover:bg-gray-100">
+                  <td className="p-2">{new Date(record.timestamp).toLocaleString()}</td>
+                  <td className="p-2">{record.message}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {history.map((record, index) => (
-                  <tr key={index} className="hover:bg-gray-100">
-                    <td className="p-2">{new Date(record.timestamp).toLocaleString()}</td>
-                    <td className="p-2">{record.message}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p className="text-gray-400">Nenhuma mensagem enviada ainda.</p>
-        )}
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <p className="text-gray-400">Nenhuma mensagem enviada ainda.</p>
+      )}
+      <div className="mt-6">
+        <button onClick={handleBack} className="px-4 py-2 bg-gray-200 text-gray-700 rounded">
+          Voltar
+        </button>
       </div>
     </div>
   );
