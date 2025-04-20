@@ -1,4 +1,3 @@
-// src/components/ClientsTable.tsx
 import { useEffect, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -32,10 +31,10 @@ export default function ClientsTable() {
   };
 
   useEffect(() => {
-    // Fetch inicial ao abrir o componente
+    // Fetch inicial
     fetchClients();
 
-    // Configuração STOMP + SockJS
+    // STOMP + SockJS para eventos em tempo real
     const socket = new SockJS("http://localhost:8090/ws");
     const stompClient = new StompClient({
       webSocketFactory: () => socket,
@@ -43,7 +42,6 @@ export default function ClientsTable() {
     });
 
     stompClient.onConnect = (frame: Frame) => {
-      console.log("STOMP conectado:", frame);
       stompClient.subscribe("/topic/clients", msg => {
         const data = JSON.parse(msg.body);
         if (data.type === "connected") {
@@ -51,11 +49,9 @@ export default function ClientsTable() {
         } else if (data.type === "disconnected") {
           toast.error(`Cliente saiu: ${data.clientId}`);
         }
-        // Atualiza lista sempre que um cliente conectar/desconectar
         fetchClients();
       });
     };
-
     stompClient.onStompError = frame => {
       console.error("STOMP error:", frame);
       toast.error("Erro na ligação STOMP.");
@@ -67,7 +63,7 @@ export default function ClientsTable() {
     };
   }, []);
 
-  // Filtra e ordena a lista antes de renderizar
+  // Filtra e ordena antes de renderizar
   const now = new Date();
   const filteredSorted = clients
     .filter(client => {
@@ -86,10 +82,11 @@ export default function ClientsTable() {
     });
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      {/* Cabeçalho com botão de refresh */}
+    <div className="bg-white rounded-lg shadow-md p-6 flex flex-col h-full">
+      {/* Cabeçalho e contador */}
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold">Clientes Conectados</h2>
+        <span className="text-gray-600">Total: {clients.length}</span>
         <button
           onClick={fetchClients}
           className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded"
@@ -98,8 +95,8 @@ export default function ClientsTable() {
         </button>
       </div>
 
-      {/* Filtros de pesquisa e tempo */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+      {/* Filtros */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4 flex-shrink-0">
         <input
           type="text"
           placeholder="Pesquisar UUID..."
@@ -119,10 +116,10 @@ export default function ClientsTable() {
         </select>
       </div>
 
-      {/* Tabela de clientes */}
-      <div className="overflow-x-auto">
+      {/* Lista scrollável */}
+      <div className="overflow-y-auto flex-1">
         <table className="w-full table-auto">
-          <thead>
+          <thead className="bg-gray-100 sticky top-0">
             <tr>
               <th
                 className="cursor-pointer p-2"

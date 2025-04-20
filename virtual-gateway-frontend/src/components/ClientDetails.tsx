@@ -25,7 +25,7 @@ export default function ClientDetails() {
       toast.success(`Mensagem '${type}' enviada!`);
     } catch (error) {
       console.error("Erro ao enviar mensagem:", error);
-      toast.error("Falha ao enviar mensagem");
+      toast.error("Falha ao enviar mensagem.");
     } finally {
       setIsSending(false);
     }
@@ -38,14 +38,13 @@ export default function ClientDetails() {
       setHistory(res.data);
     } catch (error) {
       console.error("Erro ao buscar histórico:", error);
-      toast.error("Falha ao buscar histórico");
+      toast.error("Não foi possível carregar histórico.");
     }
   };
 
   useEffect(() => {
     fetchHistory();
 
-    // STOMP over SockJS
     const socket = new SockJS("http://localhost:8090/ws");
     const stompClient = new StompClient({
       webSocketFactory: () => socket,
@@ -53,7 +52,6 @@ export default function ClientDetails() {
     });
 
     stompClient.onConnect = () => {
-      console.log("STOMP conectado (detalhes)");
       stompClient.subscribe("/topic/clients", msg => {
         const event = JSON.parse(msg.body);
         if (event.clientId === id) {
@@ -64,23 +62,15 @@ export default function ClientDetails() {
             setIsConnected(true);
             toast.success("Cliente voltou a ligar!");
           }
+          fetchHistory();
         }
       });
     };
 
-    stompClient.onStompError = (frame: Frame) => {
-      console.error("STOMP error (detalhes):", frame);
-    };
-
+    stompClient.onStompError = frame => console.error("STOMP error:", frame);
     stompClient.activate();
-    return () => {
-      stompClient.deactivate();
-    };
+    return () => stompClient.deactivate();
   }, [id]);
-
-  const handleBack = () => {
-    navigate("/");
-  };
 
   return (
     <div className="bg-white p-6 rounded shadow">
