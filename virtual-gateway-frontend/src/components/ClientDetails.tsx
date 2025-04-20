@@ -72,6 +72,10 @@ export default function ClientDetails() {
     return () => stompClient.deactivate();
   }, [id]);
 
+  const handleBack = () => {
+    navigate("/");
+  };
+
   return (
     <div className="bg-white p-6 rounded shadow">
       <h2 className="text-2xl font-bold mb-6">Detalhes do Cliente</h2>
