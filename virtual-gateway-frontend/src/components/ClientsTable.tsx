@@ -3,22 +3,19 @@ import axios from "axios";
 import { io } from "socket.io-client";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface Client {
   id: string;
   connectedAt: string;
 }
 
-type SortField = "id" | "connectedAt";
-type SortDirection = "asc" | "desc";
-
 export default function ClientsTable() {
   const [clients, setClients] = useState<Client[]>([]);
   const [search, setSearch] = useState("");
-  const [sortField, setSortField] = useState<SortField>("connectedAt");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const [sortField, setSortField] = useState<"id" | "connectedAt">("connectedAt");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [filterMinutes, setFilterMinutes] = useState<number | null>(null);
-
   const navigate = useNavigate();
 
   const fetchClients = async () => {
@@ -32,18 +29,14 @@ export default function ClientsTable() {
 
   useEffect(() => {
     fetchClients();
-
     const socket = io("http://localhost:8090/ws", { transports: ['websocket'], reconnection: true });
-
-    socket.on("connect", () => {
-      console.log("Conectado ao WebSocket!");
-    });
 
     socket.on("clients", (event) => {
       if (event.type === "connected") {
         toast.success(`Novo cliente ligado: ${event.clientId}`);
-      } else if (event.type === "disconnected") {
-        toast.error(`Cliente desligado: ${event.clientId}`);
+      }
+      if (event.type === "disconnected") {
+        toast.error(`Cliente desconectado: ${event.clientId}`);
       }
       fetchClients();
     });
@@ -53,7 +46,7 @@ export default function ClientsTable() {
     };
   }, []);
 
-  const handleSort = (field: SortField) => {
+  const handleSort = (field: "id" | "connectedAt") => {
     if (sortField === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
@@ -64,11 +57,10 @@ export default function ClientsTable() {
 
   const now = new Date();
 
-  const sortedClients = [...clients]
-    .filter(client => {
+  const filteredClients = clients
+    .filter((client) => {
       const matchesSearch = client.id.toLowerCase().includes(search.toLowerCase());
       if (!filterMinutes) return matchesSearch;
-
       const connectedDate = new Date(client.connectedAt);
       const diffMinutes = (now.getTime() - connectedDate.getTime()) / (1000 * 60);
       return matchesSearch && diffMinutes <= filterMinutes;
@@ -81,22 +73,18 @@ export default function ClientsTable() {
       return 0;
     });
 
-  const exportCSV = () => {
-    const header = "UUID,Connected At\n";
-    const rows = sortedClients.map(client => `${client.id},${client.connectedAt}`).join("\n");
-    const blob = new Blob([header + rows], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "clientes_tcp.csv";
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
   return (
-    <div className="bg-white rounded shadow p-6">
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-4">
+    <div className="bg-white rounded-lg shadow-md p-6">
+      {/* Número de clientes online */}
+      <h2 className="text-xl font-semibold mb-6">
+        Clientes Online:{" "}
+        <span className="inline-block bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm">
+          {clients.length}
+        </span>
+      </h2>
+
+      {/* Filtros de pesquisa e tempo */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <input
           type="text"
           placeholder="Pesquisar UUID..."
@@ -114,53 +102,52 @@ export default function ClientsTable() {
           <option value="10">Últimos 10 minutos</option>
           <option value="30">Últimos 30 minutos</option>
         </select>
-        <div className="flex gap-2">
-          <button
-            onClick={fetchClients}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-          >
-            Refresh
-          </button>
-          <button
-            onClick={exportCSV}
-            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
-          >
-            Exportar CSV
-          </button>
-        </div>
       </div>
 
-      <div className="overflow-x-auto rounded-lg shadow-md">
+      {/* Tabela com animação */}
+      <div className="overflow-x-auto">
         <table className="w-full text-sm text-gray-700">
-          <thead>
-            <tr className="bg-gray-200">
-              <th className="p-2 cursor-pointer" onClick={() => handleSort("id")}>
+          <thead className="bg-gray-200">
+            <tr>
+              <th
+                className="p-3 text-left cursor-pointer"
+                onClick={() => handleSort("id")}
+              >
                 UUID {sortField === "id" ? (sortDirection === "asc" ? "▲" : "▼") : ""}
               </th>
-              <th className="p-2 cursor-pointer" onClick={() => handleSort("connectedAt")}>
+              <th
+                className="p-3 text-left cursor-pointer"
+                onClick={() => handleSort("connectedAt")}
+              >
                 Hora de Ligação {sortField === "connectedAt" ? (sortDirection === "asc" ? "▲" : "▼") : ""}
               </th>
             </tr>
           </thead>
           <tbody>
-            {sortedClients.length > 0 ? (
-              sortedClients.map((client) => (
-                <tr
-                  key={client.id}
-                  className="hover:bg-gray-100 cursor-pointer"
-                  onClick={() => navigate(`/client/${client.id}`)}
-                >
-                  <td className="p-2 font-mono">{client.id}</td>
-                  <td className="p-2">{new Date(client.connectedAt).toLocaleString()}</td>
+            <AnimatePresence>
+              {filteredClients.length > 0 ? (
+                filteredClients.map((client) => (
+                  <motion.tr
+                    key={client.id}
+                    initial={{ opacity: 0, y: -5, backgroundColor: "#d1fae5" }} // verde claro inicial (Tailwind: bg-green-100)
+                    animate={{ opacity: 1, y: 0, backgroundColor: "#ffffff" }} // volta para branco normal
+                    exit={{ opacity: 0, y: 5 }}
+                    transition={{ duration: 0.6 }}
+                    className="hover:bg-gray-100 cursor-pointer transition-colors duration-300"
+                    onClick={() => navigate(`/client/${client.id}`)}
+                  >
+                    <td className="p-3 font-mono">{client.id}</td>
+                    <td className="p-3">{new Date(client.connectedAt).toLocaleString()}</td>
+                  </motion.tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={2} className="text-center p-4 text-gray-400">
+                    Nenhum cliente encontrado.
+                  </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={2} className="p-4 text-center text-gray-400">
-                  Nenhum cliente encontrado.
-                </td>
-              </tr>
-            )}
+              )}
+            </AnimatePresence>
           </tbody>
         </table>
       </div>
