@@ -84,7 +84,7 @@ public class GatewayController {
         }
     }
 
-    @GetMapping("/history/{id}")
+    @GetMapping("/clients/{id}")
     public List<MessageRecord> getClientHistory(@PathVariable String id) {
         UUID clientId = UUID.fromString(id);
         return messageHistoryService.getMessages(clientId);
