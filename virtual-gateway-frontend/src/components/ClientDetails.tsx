@@ -2,7 +2,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { io } from "socket.io-client";
 
 interface MessageRecord {
   timestamp: string;
@@ -50,28 +49,38 @@ export default function ClientDetails() {
   useEffect(() => {
     fetchHistory();
 
-    const socket = io("http://localhost:8090/ws", { transports: ['websocket'], reconnection: true });
+    const ws = new WebSocket("ws://localhost:8090/ws");
 
-    socket.on("connect", () => {
-      console.log("Ligado ao WebSocket (ClientDetails)");
-    });
+    ws.onopen = () => {
+      console.log("Ligado ao WebSocket (detalhes)");
+    };
 
-    socket.on("clients", (event) => {
-      if (event.clientId === id) {
-        if (event.type === "disconnected") {
-          setIsConnected(false);
-          toast.error("Cliente foi desligado!");
-        } else if (event.type === "connected") {
-          setIsConnected(true);
-          toast.success("Cliente voltou a ligar!");
+    ws.onmessage = (message) => {
+      try {
+        const event = JSON.parse(message.data);
+        if (event.clientId === id) {
+          if (event.type === "disconnected") {
+            setIsConnected(false);
+            toast.error("Cliente foi desligado!");
+          } else if (event.type === "connected") {
+            setIsConnected(true);
+            toast.success("Cliente voltou a ligar!");
+          }
         }
+      } catch (err) {
+        console.error("Erro ao processar mensagem WebSocket:", err);
       }
-    });
+    };
+
+    ws.onerror = (err) => {
+      console.error("Erro no WebSocket:", err);
+    };
 
     return () => {
-      socket.disconnect();
+      ws.close();
     };
   }, [id]);
+
 
   return (
     <div className="bg-white p-6 rounded shadow">
