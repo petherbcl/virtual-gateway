@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { io } from "socket.io-client";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -29,31 +28,35 @@ export default function ClientsTable() {
 
   useEffect(() => {
     fetchClients();
-    const socket = io("http://localhost:8090/ws", { transports: ['websocket'], reconnection: true });
-
-    socket.on("clients", (event) => {
-      if (event.type === "connected") {
-        toast.success(`Novo cliente ligado: ${event.clientId}`);
+  
+    const ws = new WebSocket("ws://localhost:8090/ws");
+  
+    ws.onopen = () => {
+      console.log("Ligado ao WebSocket nativo");
+    };
+  
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.event === "clients") {
+        if (data.type === "connected") {
+          toast.success(`Novo cliente ligado: ${data.clientId}`);
+        }
+        if (data.type === "disconnected") {
+          toast.error(`Cliente desconectado: ${data.clientId}`);
+        }
+        fetchClients();
       }
-      if (event.type === "disconnected") {
-        toast.error(`Cliente desconectado: ${event.clientId}`);
-      }
-      fetchClients();
-    });
-
+    };
+  
+    ws.onerror = (error) => {
+      console.error("Erro no WebSocket:", error);
+    };
+  
     return () => {
-      socket.disconnect();
+      ws.close();
     };
   }, []);
-
-  const handleSort = (field: "id" | "connectedAt") => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setSortField(field);
-      setSortDirection("asc");
-    }
-  };
+  
 
   const now = new Date();
 
