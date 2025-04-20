@@ -14,7 +14,7 @@ import com.example.gateway.Model.ClientConnection;
 public class TcpGatewayServer {
 
     private static final int TCP_PORT = 12345;
-    private static final int THREAD_POOL_SIZE = 10;
+    private static final int THREAD_POOL_SIZE = 1000;
     private static final ConcurrentHashMap<UUID, ClientConnection> connectedClients = new ConcurrentHashMap<>();
 
     public void start() {
