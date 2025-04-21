@@ -31,6 +31,8 @@ public class TcpGatewayServer {
                     WebSocketController.broadcastNewClient(clientId);
 
                     pool.submit(() -> handleClient(clientSocket, clientId));
+
+                    System.out.println("Listando clientes conectados: " + connectedClients.size());
                 }
             } catch (Exception e) {
                 System.err.println("TCP Server Error: " + e.getMessage());
@@ -52,6 +54,7 @@ public class TcpGatewayServer {
         } finally {
             connectedClients.remove(clientId);
             WebSocketController.broadcastClientDisconnected(clientId);
+            System.out.println("Client disconnected: " + clientId);
             try {
                 clientSocket.close();
             } catch (Exception ignored) {}

@@ -7,6 +7,7 @@ import { Client as StompClient, Frame } from "@stomp/stompjs";
 
 interface MessageRecord {
   timestamp: string;
+  type: string;
   message: string;
 }
 
@@ -17,7 +18,7 @@ export default function ClientDetails() {
   const [isConnected, setIsConnected] = useState(true);
   const [history, setHistory] = useState<MessageRecord[]>([]);
 
-  const sendMessageType = async (type: "NEW_DEVICE" | "DEVICE_REMOVED" | "DEVICE_DELETED") => {
+  const sendMessageType = async (type: "NEW_DEVICE" | "DEVICE_REMOVED" | "DEVICE_DELETED" | "START_REPORTING_METERS" | "DELETE_METERS" | "ENABLE_AUTO_CLOSE" | "DISABLE_AUTO_CLOSE") => {
     if (!id) return;
     try {
       setIsSending(true);
@@ -52,6 +53,12 @@ export default function ClientDetails() {
     });
 
     stompClient.onConnect = () => {
+      // Inscreve-se no tópico de mensagens para o cliente atual
+      stompClient.subscribe(`/topic/messages/${id}`, msg => {
+        const newMessage = JSON.parse(msg.body) as MessageRecord;
+        setHistory(prevHistory => [newMessage, ...prevHistory]); // Adiciona a nova mensagem ao histórico
+      });
+
       stompClient.subscribe("/topic/clients", msg => {
         const event = JSON.parse(msg.body);
         if (event.clientId === id) {
@@ -85,7 +92,7 @@ export default function ClientDetails() {
           {isConnected ? "Ligado" : "Desligado"}
         </span>
       </div>
-      <div className="flex flex-col gap-4 mb-8">
+      <div className="flex flex-row gap-4 mb-8">
         <button
           disabled={isSending || !isConnected}
           onClick={() => sendMessageType("NEW_DEVICE")}
@@ -102,10 +109,31 @@ export default function ClientDetails() {
         </button>
         <button
           disabled={isSending || !isConnected}
-          onClick={() => sendMessageType("DEVICE_DELETED")}
+          onClick={() => sendMessageType("START_REPORTING_METERS")}
           className={`px-4 py-2 ${isConnected ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-400"} text-white rounded transition`}
         >
-          Eliminar Dispositivo
+          Iniciar Relatório de Medidores
+        </button>
+        <button
+          disabled={isSending || !isConnected}
+          onClick={() => sendMessageType("DELETE_METERS")}
+          className={`px-4 py-2 ${isConnected ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-400"} text-white rounded transition`}
+        >
+          Eliminar Medidores
+        </button>
+        <button
+          disabled={isSending || !isConnected}
+          onClick={() => sendMessageType("ENABLE_AUTO_CLOSE")}
+          className={`px-4 py-2 ${isConnected ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-400"} text-white rounded transition`}
+        >
+          Ativar Fechamento Automático
+        </button>
+        <button
+          disabled={isSending || !isConnected}
+          onClick={() => sendMessageType("DISABLE_AUTO_CLOSE")}
+          className={`px-4 py-2 ${isConnected ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-400"} text-white rounded transition`}
+        >
+          Desativar Fechamento Automático
         </button>
       </div>
       {history.length > 0 ? (
@@ -114,6 +142,7 @@ export default function ClientDetails() {
             <thead>
               <tr>
                 <th className="text-left p-2">Timestamp</th>
+                <th className="text-left p-2">Tipo</th>
                 <th className="text-left p-2">Mensagem</th>
               </tr>
             </thead>
@@ -121,6 +150,7 @@ export default function ClientDetails() {
               {history.map((record, index) => (
                 <tr key={index} className="hover:bg-gray-100">
                   <td className="p-2">{new Date(record.timestamp).toLocaleString()}</td>
+                  <td className="p-2">{record.type}</td>
                   <td className="p-2">{record.message}</td>
                 </tr>
               ))}

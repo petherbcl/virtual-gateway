@@ -6,6 +6,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
 import com.example.gateway.Model.ClientEvent;
+import com.example.gateway.Model.MessageRecord;
 
 @Controller
 public class WebSocketController {
@@ -22,5 +23,9 @@ public class WebSocketController {
 
     public static void broadcastClientDisconnected(UUID clientId) {
         messagingTemplate.convertAndSend("/topic/clients", new ClientEvent("disconnected", clientId.toString()));
+    }
+
+    public static void broadcastMessageSent(UUID clientId, MessageRecord messageRecord) {
+        messagingTemplate.convertAndSend("/topic/messages/" + clientId, messageRecord);
     }
 }
