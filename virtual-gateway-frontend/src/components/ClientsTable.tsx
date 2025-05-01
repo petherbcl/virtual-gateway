@@ -9,13 +9,14 @@ import { Client as StompClient, Frame } from "@stomp/stompjs";
 interface Client {
   id: string;
   connectedAt: string;
+  ip: string; // Novo campo para o IP
 }
 
 export default function ClientsTable() {
   const [clients, setClients] = useState<Client[]>([]);
   const [search, setSearch] = useState("");
   const [filterMinutes, setFilterMinutes] = useState<number | null>(null);
-  const [sortField, setSortField] = useState<"id" | "connectedAt">("connectedAt");
+  const [sortField, setSortField] = useState<"id" | "connectedAt" | "ip">("connectedAt");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const navigate = useNavigate();
 
@@ -81,12 +82,23 @@ export default function ClientsTable() {
       return 0;
     });
 
+  const closeClientSocket = async (id: string) => {
+    try {
+      await axios.post(`/api/clients/${id}/close`);
+      toast.success("Cliente desconectado com sucesso!");
+      fetchClients(); // Atualiza a lista de clientes
+    } catch (error) {
+      console.error("Erro ao desconectar cliente:", error);
+      toast.error("Erro ao desconectar cliente.");
+    }
+  };
+
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 flex flex-col h-full">
+    <div className="bg-white dark:bg-gray-800 dark:text-gray-200 rounded-lg shadow-md p-6 flex flex-col h-full">
       {/* Cabeçalho e contador */}
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold">Clientes Conectados</h2>
-        <span className="text-gray-600">Total: {clients.length}</span>
+        <span className="text-gray-600 dark:text-white">Total: {clients.length}</span>
         <button
           onClick={fetchClients}
           className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded"
@@ -100,12 +112,12 @@ export default function ClientsTable() {
         <input
           type="text"
           placeholder="Pesquisar UUID..."
-          className="w-full md:w-1/3 p-2 border rounded"
+          className="w-full md:w-1/3 p-2 border rounded dark:text-gray-800"
           value={search}
           onChange={e => setSearch(e.target.value)}
         />
         <select
-          className="w-full md:w-48 p-2 border rounded"
+          className="w-full md:w-48 p-2 border rounded dark:text-gray-800"
           value={filterMinutes ?? ""}
           onChange={e => setFilterMinutes(Number(e.target.value) || null)}
         >
@@ -118,8 +130,8 @@ export default function ClientsTable() {
 
       {/* Lista scrollável */}
       <div className="overflow-y-auto flex-1">
-        <table className="w-full table-auto">
-          <thead className="bg-gray-100 sticky top-0">
+        <table className="w-full table-auto ">
+          <thead className="bg-gray-300 dark:bg-gray-500 sticky top-0">
             <tr>
               <th
                 className="cursor-pointer p-2"
@@ -133,12 +145,23 @@ export default function ClientsTable() {
               <th
                 className="cursor-pointer p-2"
                 onClick={() => {
+                  setSortField("ip");
+                  setSortDirection(dir => (dir === "asc" ? "desc" : "asc"));
+                }}
+              >
+                IP
+              </th>
+              <th
+                className="cursor-pointer p-2"
+                onClick={() => {
                   setSortField("connectedAt");
                   setSortDirection(dir => (dir === "asc" ? "desc" : "asc"));
                 }}
               >
                 Conectado em
               </th>
+              <th className="p-2"></th>
+              <th className="p-2"></th>
             </tr>
           </thead>
           <tbody>
@@ -150,18 +173,33 @@ export default function ClientsTable() {
                     initial={{ opacity: 0, y: -5 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 5 }}
-                    className="hover:bg-gray-100 cursor-pointer"
-                    onClick={() => navigate(`/clients/${client.id}`)}
+                    className="hover:bg-gray-300 dark:hover:bg-gray-600 odd:bg-gray-200 dark:odd:bg-gray-700"
+                    // onClick={() => navigate(`/clients/${client.id}`)}
                   >
                     <td className="p-2">{client.id}</td>
+                    <td className="p-2">{client.ip}</td>
+                    <td className="p-2">{new Date(client.connectedAt).toLocaleString()}</td>
                     <td className="p-2">
-                      {new Date(client.connectedAt).toLocaleString()}
+                      <button
+                        onClick={() => navigate(`/clients/${client.id}`)}
+                        className="px-2 py-1  text-white rounded"
+                      >
+                        <i className="fa-solid fa-magnifying-glass"></i>
+                      </button>
+                    </td>
+                    <td className="p-2">
+                      <button
+                        onClick={() => closeClientSocket(client.id)}
+                        className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded"
+                      >
+                        <i className="fa-solid fa-square-xmark"></i>
+                      </button>
                     </td>
                   </motion.tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={2} className="text-center p-4 text-gray-400">
+                  <td colSpan={4} className="text-center p-4 text-gray-400 dark:text-gray-500">
                     Nenhum cliente encontrado.
                   </td>
                 </tr>

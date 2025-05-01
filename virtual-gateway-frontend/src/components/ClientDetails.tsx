@@ -11,12 +11,19 @@ interface MessageRecord {
   message: string;
 }
 
+interface Client {
+  id: string;
+  connectedAt: string;
+  ip: string; // Novo campo para o IP
+}
+
 export default function ClientDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [isSending, setIsSending] = useState(false);
   const [isConnected, setIsConnected] = useState(true);
   const [history, setHistory] = useState<MessageRecord[]>([]);
+  const [clientIp, setClientIp] = useState<string | null>(null);
 
   const sendMessageType = async (type: "NEW_DEVICE" | "DEVICE_REMOVED" | "DEVICE_DELETED" | "START_REPORTING_METERS" | "DELETE_METERS" | "ENABLE_AUTO_CLOSE" | "DISABLE_AUTO_CLOSE") => {
     if (!id) return;
@@ -79,20 +86,72 @@ export default function ClientDetails() {
     return () => stompClient.deactivate();
   }, [id]);
 
+  useEffect(() => {
+    if (!id) return;
+
+    // Busca o IP do cliente
+    const fetchClientIp = async () => {
+      try {
+        const res = await axios.get<Client>(`/api/clients/${id}`);
+        setClientIp(res.data.ip);
+      } catch (error) {
+        console.error("Erro ao buscar IP do cliente:", error);
+        toast.error("Não foi possível carregar o IP do cliente.");
+      }
+    };
+
+    fetchClientIp();
+  }, [id]);
+
   const handleBack = () => {
     navigate("/");
   };
 
+  const closeClientSocket = async () => {
+    if (!id) return;
+    try {
+      await axios.post(`/api/clients/${id}/close`);
+      toast.success("Cliente desconectado com sucesso!");
+      navigate("/"); // Redireciona para a lista de clientes
+    } catch (error) {
+      console.error("Erro ao desconectar cliente:", error);
+      toast.error("Erro ao desconectar cliente.");
+    }
+  };
+
   return (
-    <div className="bg-white p-6 rounded shadow">
+    <div className="bg-white dark:bg-gray-800 dark:text-gray-200 p-6 rounded shadow">
       <h2 className="text-2xl font-bold mb-6">Detalhes do Cliente</h2>
-      <p className="mb-4"><strong>UUID:</strong> {id}</p>
+      <p className="mb-4">
+        <strong>UUID:</strong> {id}
+      </p>
+      <p className="mb-4">
+        <strong>IP:</strong> {clientIp || "Carregando..."}
+      </p>
       <div className="mb-6">
-        <span className={`inline-block px-3 py-1 rounded-full text-white ${isConnected ? "bg-green-500" : "bg-red-500"}`}>
+        <span
+          className={`inline-block px-3 py-1 rounded-full text-white ${isConnected ? "bg-green-500" : "bg-red-500"
+            }`}
+        >
           {isConnected ? "Ligado" : "Desligado"}
         </span>
       </div>
       <div className="flex flex-row gap-4 mb-8">
+        <button onClick={handleBack} className="px-4 py-2 bg-gray-200 text-gray-700 rounded">
+          Voltar
+        </button>
+        <button
+          onClick={closeClientSocket}
+          className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded"
+        >
+          Fechar Conexão
+        </button>
+      </div>
+
+
+
+      <div className="flex flex-row gap-4 mb-8">
+
         <button
           disabled={isSending || !isConnected}
           onClick={() => sendMessageType("NEW_DEVICE")}
@@ -139,7 +198,7 @@ export default function ClientDetails() {
       {history.length > 0 ? (
         <div className="overflow-x-auto">
           <table className="w-full table-auto">
-            <thead>
+            <thead className="bg-gray-300 dark:bg-gray-500">
               <tr>
                 <th className="text-left p-2">Timestamp</th>
                 <th className="text-left p-2">Tipo</th>
@@ -148,8 +207,13 @@ export default function ClientDetails() {
             </thead>
             <tbody>
               {history.map((record, index) => (
-                <tr key={index} className="hover:bg-gray-100">
-                  <td className="p-2">{new Date(record.timestamp).toLocaleString()}</td>
+                <tr
+                  key={index}
+                  className="hover:bg-gray-300 dark:hover:bg-gray-600 odd:bg-gray-200 dark:odd:bg-gray-700"
+                >
+                  <td className="p-2">
+                    {new Date(record.timestamp).toLocaleString()}
+                  </td>
                   <td className="p-2">{record.type}</td>
                   <td className="p-2">{record.message}</td>
                 </tr>
@@ -160,11 +224,6 @@ export default function ClientDetails() {
       ) : (
         <p className="text-gray-400">Nenhuma mensagem enviada ainda.</p>
       )}
-      <div className="mt-6">
-        <button onClick={handleBack} className="px-4 py-2 bg-gray-200 text-gray-700 rounded">
-          Voltar
-        </button>
-      </div>
     </div>
   );
 }

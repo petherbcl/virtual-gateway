@@ -7,19 +7,36 @@ table {
   border-collapse: collapse;
 }
 
-thead {
-  background-color: #f3f4f6; /* cinza claro */
-}
-
-tbody tr:nth-child(odd) {
-  background-color: #f9fafb; /* zebra */
-}
-
-tbody tr:hover {
-  background-color: #e5e7eb; /* hover highlight */
-}
-
 td, th {
   padding: 0.75rem;
   text-align: left;
+}
+
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out forwards;
+}
+
+/* Spinner animation */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
 }

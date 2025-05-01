@@ -8,6 +8,6 @@ public class VirtualGatewayApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(VirtualGatewayApplication.class, args);
-        new TcpGatewayServer().start();
+        // new TcpGatewayServer().start();
     }
 }
