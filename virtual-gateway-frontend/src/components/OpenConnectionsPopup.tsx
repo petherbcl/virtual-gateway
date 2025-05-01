@@ -1,6 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
+import Loading from "./Loading";
 
 interface OpenConnectionsPopupProps {
   isOpen: boolean;
@@ -16,17 +17,31 @@ export default function OpenConnectionsPopup({
 
   const handleConfirm = async () => {
     setIsLoading(true);
+
+    const openConnection = async (index: number) => {
+      const timeout = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Timeout")), 30000)
+      );
+
+      const request = axios.post("/api/open-connections", { count: 1 });
+
+      try {
+        await Promise.race([request, timeout]);
+      } catch (error) {
+        toast.error(`Erro ao abrir ligação ${index + 1}.`);
+      }
+    };
+
     try {
-      const response = await axios.post("/api/open-connections", {
-        count: connections,
-      });
-      toast.success(response.data.message || "Ligações abertas com sucesso!");
+      for (let i = 0; i < connections; i++) {
+        await openConnection(i);
+      }
       onClose();
     } catch (error) {
       console.error("Erro ao abrir ligações:", error);
-      toast.error("Erro ao abrir ligações.");
     } finally {
-      setIsLoading(false); // Desativa o loading
+      setIsLoading(false);
+      toast.dismiss();
     }
   };
 
@@ -34,9 +49,9 @@ export default function OpenConnectionsPopup({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10">
-      <div
-        className="bg-white dark:bg-gray-800 p-6 rounded shadow-lg w-96 transform transition-all duration-300 ease-out scale-95 opacity-0 animate-fade-in"
-      >
+      { isLoading && <Loading /> }
+
+      <div className="bg-white dark:bg-gray-800 p-6 rounded shadow-lg w-96 transform transition-all duration-300 ease-out scale-95 opacity-0 animate-fade-in">
         <h2 className="text-xl font-bold mb-4">Abrir Ligações</h2>
         <div className="mb-4">
           <label className="block text-sm font-medium mb-2">
