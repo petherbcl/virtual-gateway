@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import React from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
@@ -101,21 +102,27 @@ export default function ClientsTable() {
         <span className="text-gray-600 dark:text-white">Total: {clients.length}</span>
         <button
           onClick={fetchClients}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded"
+          className="btn btn-circle border-none shadow-none bg-cyan-500 hover:bg-cyan-600 text-white "
         >
-          Refresh
+          <i className="fa-solid fa-arrows-rotate"></i>
         </button>
       </div>
 
       {/* Filtros */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4 flex-shrink-0">
-        <input
-          type="text"
-          placeholder="Pesquisar UUID..."
-          className="w-full md:w-1/3 p-2 border rounded dark:text-white"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
+        
+
+        <label className="input">
+          <i className="fa-solid fa-magnifying-glass text-gray-700"></i>
+          <input
+            type="text"
+            placeholder="Pesquisar UUID..."
+            className="grow w-full md:w-1/3 p-2 text-gray-700"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+        </label>
+
         <select
           className=" select  w-full md:w-48 p-2 border rounded dark:text-gray-800"
           value={filterMinutes ?? ""}
@@ -129,9 +136,9 @@ export default function ClientsTable() {
       </div>
 
       {/* Lista scrollável */}
-      <div className="overflow-y-auto flex-1">
-        <table className="w-full table-auto ">
-          <thead className="bg-gray-300 dark:bg-gray-500 sticky top-0">
+      <div className="overflow-x-auto rounded-box bg-base-100">
+        <table className="table  ">
+          <thead className="bg-gray-300 dark:bg-gray-500 dark:text-white">
             <tr>
               <th
                 className="cursor-pointer p-2"
@@ -173,16 +180,16 @@ export default function ClientsTable() {
                     initial={{ opacity: 0, y: -5 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 5 }}
-                    className="hover:bg-gray-300 dark:hover:bg-gray-600 odd:bg-gray-200 dark:odd:bg-gray-700"
+                    className="bg-gray-100 dark:bg-gray-500 hover:bg-gray-300 dark:hover:bg-gray-600 odd:bg-gray-200 dark:odd:bg-gray-700"
                     // onClick={() => navigate(`/clients/${client.id}`)}
                   >
                     <td className="p-2">{client.id}</td>
                     <td className="p-2">{client.ip}</td>
-                    <td className="p-2">{new Date(client.connectedAt).toLocaleString()}</td>
+                    <td className="p-2">{client.connectedAt}</td>
                     <td className="p-2">
                       <button
                         onClick={() => navigate(`/clients/${client.id}`)}
-                        className="px-2 py-1  text-white rounded"
+                        className="btn btn-sm btn-circle border-none shadow-none bg-cyan-500 hover:bg-cyan-600 text-white"
                       >
                         <i className="fa-solid fa-magnifying-glass"></i>
                       </button>
@@ -190,16 +197,16 @@ export default function ClientsTable() {
                     <td className="p-2">
                       <button
                         onClick={() => closeClientSocket(client.id)}
-                        className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded"
+                        className="btn btn-sm btn-circle border-none shadow-none bg-red-600 hover:bg-red-700 text-white"
                       >
-                        <i className="fa-solid fa-square-xmark"></i>
+                        <i className="fa-solid fa-xmark-large"></i>
                       </button>
                     </td>
                   </motion.tr>
                 ))
               ) : (
-                <tr>
-                  <td colSpan={4} className="text-center p-4 text-gray-400 dark:text-gray-500">
+                <tr className="bg-gray-100 dark:bg-gray-400">
+                  <td colSpan={5} className="text-center p-4 text-gray-400 dark:text-white">
                     Nenhum cliente encontrado.
                   </td>
                 </tr>
@@ -208,6 +215,8 @@ export default function ClientsTable() {
           </tbody>
         </table>
       </div>
+
+      
     </div>
   );
 }

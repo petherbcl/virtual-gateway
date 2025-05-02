@@ -1,7 +1,6 @@
 package com.example.gateway.Controller;
 
 import java.io.OutputStream;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -49,8 +48,9 @@ public class GatewayController {
                 .stream()
                 .map(entry -> new ClientInfo(
                 entry.getKey().toString(),
-                entry.getValue().getConnectedAt().toString(),
-                entry.getValue().getIp() // Adiciona o IP
+                entry.getValue().getConnectedAt(),
+                entry.getValue().getIp(),
+                entry.getValue().getMeterList()
         ))
                 .collect(Collectors.toList());
     }
@@ -83,10 +83,15 @@ public class GatewayController {
         try {
             String messageType = request.getType().name();
             UUID clientId = UUID.fromString(request.getId());
+            String meterId = request.getMeterId();
+            System.out.println("Enviando mensagem\ntipo: " + messageType + "\ncliente: " + clientId+"\nmedidor: " + meterId);
+
+
             PlcGtwConnection client = tcpGatewayServer.getConnectedClients().get(clientId);
             String messageToSend = "0001";
             String dlmsMsg;
             byte[] messageBytes = null;
+            Meter meterRec = null;
 
             if (client == null || client.getSocket().isClosed()) {
                 System.out.println("Cliente não encontrado ou ligação fechada!");
@@ -96,26 +101,81 @@ public class GatewayController {
             switch (messageType) {
                 case "NEW_DEVICE" -> {
                     // Adiciona um novo dispositivo à lista de medidores do cliente
-                    int meterId = client.getMeterIdStart() + client.getMeterList().size() + 1;
-                    Meter newMeter = new Meter(meterId);
-                    client.getMeterList().add(newMeter);
-                    System.out.println("Novo dispositivo adicionado: " + newMeter);
+                    int newMeterId = client.getMeterIdStart() + client.getMeterList().size() + 1;
+                    meterRec = new Meter(newMeterId);
+                    client.getMeterList().add(meterRec);
+                    System.out.println("Novo dispositivo adicionado: " + meterRec);
 
                     messageToSend += "0001" + "0000";
-                    dlmsMsg = "01" + MessageType.decimalToHex(newMeter.getDeviceId(),4) + MessageType.decimalToHex(newMeter.getCapabilities(),4);
-                    String dlmsIdSize = MessageType.decimalToHex(newMeter.getDlmsId().length(), 2);
-                    dlmsMsg += dlmsIdSize + MessageType.stringToHex(newMeter.getDlmsId(),1) + newMeter.getEui48();
+                    dlmsMsg = "01" + MessageType.decimalToHex(meterRec.getDeviceId(),4) + MessageType.decimalToHex(meterRec.getCapabilities(),4);
+                    String dlmsIdSize = MessageType.decimalToHex(meterRec.getDlmsId().length(), 2);
+                    dlmsMsg += dlmsIdSize + MessageType.stringToHex(meterRec.getDlmsId(),1) + meterRec.getEui48();
 
                     messageToSend += MessageType.decimalToHex(dlmsMsg.length()/2, 4) + dlmsMsg;
 
                     messageBytes = MessageType.hexstr2Bytes(messageToSend);
 
                 }
-                case "DEVICE_REMOVED" -> {}
-                case "START_REPORTING_METERS" -> {}
-                case "DELETE_METERS" -> {}
-                case "ENABLE_AUTO_CLOSE" -> {}
-                case "DISABLE_AUTO_CLOSE" -> {}
+                case "DEVICE_REMOVED" -> {
+                    
+                    meterRec = client.getMeterList().stream()
+                            .filter(meter -> meter.getDeviceId() == Integer.parseInt(meterId))
+                            .findFirst()
+                            .orElse(null);
+
+                    meterRec.setConnected(false);
+                    System.out.println("Dispositivo removido: " + meterRec);
+
+                    messageToSend += "0001" + "0000";
+                    dlmsMsg = "02" + MessageType.decimalToHex(meterRec.getDeviceId(),4);
+                    messageToSend += MessageType.decimalToHex(dlmsMsg.length()/2, 4) + dlmsMsg;
+                    messageBytes = MessageType.hexstr2Bytes(messageToSend);
+
+                }
+                case "START_REPORTING_METERS" -> {
+                    meterRec = client.getMeterList().stream()
+                            .filter(meter -> meter.getDeviceId() == Integer.parseInt(meterId))
+                            .findFirst()
+                            .orElse(null);
+
+                    messageToSend += "0000" + "0001";
+                    dlmsMsg = "03";
+                    messageToSend += MessageType.decimalToHex(dlmsMsg.length()/2, 4) + dlmsMsg;
+                    messageBytes = MessageType.hexstr2Bytes(messageToSend);
+                }
+                case "DELETE_METERS" -> {
+                    meterRec = client.getMeterList().stream()
+                            .filter(meter -> meter.getDeviceId() == Integer.parseInt(meterId))
+                            .findFirst()
+                            .orElse(null);
+
+                    messageToSend += "0000" + "0001";
+                    dlmsMsg = "04" + MessageType.decimalToHex(meterRec.getDeviceId(),4);
+                    messageToSend += MessageType.decimalToHex(dlmsMsg.length()/2, 4) + dlmsMsg;
+                    messageBytes = MessageType.hexstr2Bytes(messageToSend);
+                }
+                case "ENABLE_AUTO_CLOSE" -> {
+                    meterRec = client.getMeterList().stream()
+                            .filter(meter -> meter.getDeviceId() == Integer.parseInt(meterId))
+                            .findFirst()
+                            .orElse(null);
+
+                    messageToSend += "0000" + "0001";
+                    dlmsMsg = "05" + MessageType.decimalToHex(meterRec.getDeviceId(),4);
+                    messageToSend += MessageType.decimalToHex(dlmsMsg.length()/2, 4) + dlmsMsg;
+                    messageBytes = MessageType.hexstr2Bytes(messageToSend);
+                }
+                case "DISABLE_AUTO_CLOSE" -> {
+                    meterRec = client.getMeterList().stream()
+                            .filter(meter -> meter.getDeviceId() == Integer.parseInt(meterId))
+                            .findFirst()
+                            .orElse(null);
+
+                    messageToSend += "0000" + "0001";
+                    dlmsMsg = "06" + MessageType.decimalToHex(meterRec.getDeviceId(),4);
+                    messageToSend += MessageType.decimalToHex(dlmsMsg.length()/2, 4) + dlmsMsg;
+                    messageBytes = MessageType.hexstr2Bytes(messageToSend);
+                }
                 default -> {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tipo de mensagem inválido: " + messageType);
                 }
@@ -127,11 +187,10 @@ public class GatewayController {
             out.flush();
 
             // Salva o tipo de mensagem no histórico
-            MessageRecord messageRecord = new MessageRecord(LocalDateTime.now(), messageToSend, request.getType().name());
-            messageHistoryService.addMessage(clientId, messageToSend, request.getType().name());
+            meterRec.getMessageHistory().add(new MessageRecord(messageToSend, messageType));
 
             // Notifica o frontend via WebSocket
-            WebSocketController.broadcastMessageSent(clientId, messageRecord);
+            WebSocketController.broadcastMessageSent(clientId);
 
             System.out.println("Mensagem '" + messageToSend + "' enviada para o cliente: " + clientId);
 
@@ -145,7 +204,7 @@ public class GatewayController {
     public ClientInfo getClientHistory(@PathVariable String id) {
         UUID clientId = UUID.fromString(id);
         PlcGtwConnection client = tcpGatewayServer.getConnectedClients().get(clientId);
-        return new ClientInfo(clientId.toString(), client.getConnectedAt().toString(), client.getIp());
+        return new ClientInfo(clientId.toString(), client.getConnectedAt(), client.getIp(), client.getMeterList());
     }
 
     @GetMapping("/history/{id}")

@@ -1,5 +1,7 @@
 package com.example.gateway.Model;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 import com.google.gson.Gson;
@@ -10,12 +12,16 @@ public class Meter {
     private int capabilities;
     private String dlmsId;
     private String eui48;
+    private boolean isConnected; 
+    private List<MessageRecord> messageHistory = new ArrayList<>(); // Lista de mensagens associadas ao medidor
 
     public Meter(int deviceId) {
         this.deviceId = deviceId;
         this.capabilities = 1;
         this.dlmsId = generateRandomDlmsId();
         this.eui48 = generateRandomEui48();
+        this.isConnected = true;
+        this.messageHistory = new ArrayList<>();
     }
 
     private String generateRandomDlmsId() {
@@ -71,6 +77,21 @@ public class Meter {
 
     public String getEui48() {
         return eui48;
+    }
+
+    public boolean isConnected() {
+        return isConnected;
+    }
+    public void setConnected(boolean connected) {
+        isConnected = connected;
+    }
+
+    public List<MessageRecord> getMessageHistory() {
+        return messageHistory;
+    }
+
+    public void addMessageToHistory(MessageRecord message) {
+        this.messageHistory.add(message);
     }
 
     @Override

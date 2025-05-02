@@ -1,6 +1,5 @@
 package com.example.gateway.Service;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -17,7 +16,7 @@ public class MessageHistoryService {
 
     public void addMessage(UUID clientId, String message, String type) {
         history.computeIfAbsent(clientId, k -> new ArrayList<>())
-               .add(new MessageRecord(LocalDateTime.now(), message, type));
+               .add(new MessageRecord(message, type));
     }
 
     public List<MessageRecord> getMessages(UUID clientId) {
