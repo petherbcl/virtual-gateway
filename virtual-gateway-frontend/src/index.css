@@ -1,16 +1,16 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+@plugin "daisyui";
 
 /* Estilo extra para a tabela */
-table {
+/* table {
   border-collapse: collapse;
-}
+} */
 
-td, th {
+/* td, th {
   padding: 0.75rem;
   text-align: left;
-}
+} */
 
 @keyframes fade-in {
   0% {

@@ -22,11 +22,10 @@ import org.springframework.web.server.ResponseStatusException;
 import com.example.gateway.Component.TcpGatewayServer;
 import com.example.gateway.Model.ClientInfo;
 import com.example.gateway.Model.MessageRecord;
-import com.example.gateway.Model.MessageType;
 import com.example.gateway.Model.MessageTypeRequest;
 import com.example.gateway.Model.Meter;
 import com.example.gateway.Model.PlcGtwConnection;
-import com.example.gateway.Service.MessageHistoryService;
+import com.example.gateway.Model.Util;
 
 @RestController
 @RequestMapping("/api")
@@ -35,9 +34,6 @@ public class GatewayController {
 
     @Autowired
     private TcpGatewayServer tcpGatewayServer;
-
-    @Autowired
-    private MessageHistoryService messageHistoryService;
 
     @GetMapping("/clients")
     public List<ClientInfo> listClients() {
@@ -50,7 +46,7 @@ public class GatewayController {
                 entry.getKey().toString(),
                 entry.getValue().getConnectedAt(),
                 entry.getValue().getIp(),
-                entry.getValue().getMeterList()
+                entry.getValue().getMeterList().size()
         ))
                 .collect(Collectors.toList());
     }
@@ -81,7 +77,7 @@ public class GatewayController {
     @PostMapping("/sendMessageType")
     public String sendMessageType(@RequestBody MessageTypeRequest request) {
         try {
-            String messageType = request.getType().name();
+            String messageType = request.getType();
             UUID clientId = UUID.fromString(request.getId());
             String meterId = request.getMeterId();
             System.out.println("Enviando mensagem\ntipo: " + messageType + "\ncliente: " + clientId+"\nmedidor: " + meterId);
@@ -107,13 +103,13 @@ public class GatewayController {
                     System.out.println("Novo dispositivo adicionado: " + meterRec);
 
                     messageToSend += "0001" + "0000";
-                    dlmsMsg = "01" + MessageType.decimalToHex(meterRec.getDeviceId(),4) + MessageType.decimalToHex(meterRec.getCapabilities(),4);
-                    String dlmsIdSize = MessageType.decimalToHex(meterRec.getDlmsId().length(), 2);
-                    dlmsMsg += dlmsIdSize + MessageType.stringToHex(meterRec.getDlmsId(),1) + meterRec.getEui48();
+                    dlmsMsg = "01" + Util.decimalToHex(meterRec.getDeviceId(),4) + Util.decimalToHex(meterRec.getCapabilities(),4);
+                    String dlmsIdSize = Util.decimalToHex(meterRec.getDlmsId().length(), 2);
+                    dlmsMsg += dlmsIdSize + Util.stringToHex(meterRec.getDlmsId(),1) + meterRec.getEui48();
 
-                    messageToSend += MessageType.decimalToHex(dlmsMsg.length()/2, 4) + dlmsMsg;
+                    messageToSend += Util.decimalToHex(dlmsMsg.length()/2, 4) + dlmsMsg;
 
-                    messageBytes = MessageType.hexstr2Bytes(messageToSend);
+                    messageBytes = Util.hexstr2Bytes(messageToSend);
 
                 }
                 case "DEVICE_REMOVED" -> {
@@ -127,9 +123,9 @@ public class GatewayController {
                     System.out.println("Dispositivo removido: " + meterRec);
 
                     messageToSend += "0001" + "0000";
-                    dlmsMsg = "02" + MessageType.decimalToHex(meterRec.getDeviceId(),4);
-                    messageToSend += MessageType.decimalToHex(dlmsMsg.length()/2, 4) + dlmsMsg;
-                    messageBytes = MessageType.hexstr2Bytes(messageToSend);
+                    dlmsMsg = "02" + Util.decimalToHex(meterRec.getDeviceId(),4);
+                    messageToSend += Util.decimalToHex(dlmsMsg.length()/2, 4) + dlmsMsg;
+                    messageBytes = Util.hexstr2Bytes(messageToSend);
 
                 }
                 case "START_REPORTING_METERS" -> {
@@ -140,8 +136,8 @@ public class GatewayController {
 
                     messageToSend += "0000" + "0001";
                     dlmsMsg = "03";
-                    messageToSend += MessageType.decimalToHex(dlmsMsg.length()/2, 4) + dlmsMsg;
-                    messageBytes = MessageType.hexstr2Bytes(messageToSend);
+                    messageToSend += Util.decimalToHex(dlmsMsg.length()/2, 4) + dlmsMsg;
+                    messageBytes = Util.hexstr2Bytes(messageToSend);
                 }
                 case "DELETE_METERS" -> {
                     meterRec = client.getMeterList().stream()
@@ -150,9 +146,9 @@ public class GatewayController {
                             .orElse(null);
 
                     messageToSend += "0000" + "0001";
-                    dlmsMsg = "04" + MessageType.decimalToHex(meterRec.getDeviceId(),4);
-                    messageToSend += MessageType.decimalToHex(dlmsMsg.length()/2, 4) + dlmsMsg;
-                    messageBytes = MessageType.hexstr2Bytes(messageToSend);
+                    dlmsMsg = "04" + Util.decimalToHex(meterRec.getDeviceId(),4);
+                    messageToSend += Util.decimalToHex(dlmsMsg.length()/2, 4) + dlmsMsg;
+                    messageBytes = Util.hexstr2Bytes(messageToSend);
                 }
                 case "ENABLE_AUTO_CLOSE" -> {
                     meterRec = client.getMeterList().stream()
@@ -161,9 +157,9 @@ public class GatewayController {
                             .orElse(null);
 
                     messageToSend += "0000" + "0001";
-                    dlmsMsg = "05" + MessageType.decimalToHex(meterRec.getDeviceId(),4);
-                    messageToSend += MessageType.decimalToHex(dlmsMsg.length()/2, 4) + dlmsMsg;
-                    messageBytes = MessageType.hexstr2Bytes(messageToSend);
+                    dlmsMsg = "05" + Util.decimalToHex(meterRec.getDeviceId(),4);
+                    messageToSend += Util.decimalToHex(dlmsMsg.length()/2, 4) + dlmsMsg;
+                    messageBytes = Util.hexstr2Bytes(messageToSend);
                 }
                 case "DISABLE_AUTO_CLOSE" -> {
                     meterRec = client.getMeterList().stream()
@@ -172,9 +168,31 @@ public class GatewayController {
                             .orElse(null);
 
                     messageToSend += "0000" + "0001";
-                    dlmsMsg = "06" + MessageType.decimalToHex(meterRec.getDeviceId(),4);
-                    messageToSend += MessageType.decimalToHex(dlmsMsg.length()/2, 4) + dlmsMsg;
-                    messageBytes = MessageType.hexstr2Bytes(messageToSend);
+                    dlmsMsg = "06" + Util.decimalToHex(meterRec.getDeviceId(),4);
+                    messageToSend += Util.decimalToHex(dlmsMsg.length()/2, 4) + dlmsMsg;
+                    messageBytes = Util.hexstr2Bytes(messageToSend);
+                }
+                case "EVENT_NOTIFICATION_REQUEST" -> {
+                    meterRec = client.getMeterList().stream()
+                            .filter(meter -> meter.getDeviceId() == Integer.parseInt(meterId))
+                            .findFirst()
+                            .orElse(null);
+
+                    messageToSend += "0000" + "0001";
+                    dlmsMsg = "C2" + Util.decimalToHex(meterRec.getDeviceId(),4);
+                    messageToSend += Util.decimalToHex(dlmsMsg.length()/2, 4) + dlmsMsg;
+                    messageBytes = Util.hexstr2Bytes(messageToSend);
+                }
+                case "GLO_EVENT_NOTIFICATION_REQUEST" -> {
+                    meterRec = client.getMeterList().stream()
+                            .filter(meter -> meter.getDeviceId() == Integer.parseInt(meterId))
+                            .findFirst()
+                            .orElse(null);
+
+                    messageToSend += "0000" + "0001";
+                    dlmsMsg = "CA" + Util.decimalToHex(meterRec.getDeviceId(),4);
+                    messageToSend += Util.decimalToHex(dlmsMsg.length()/2, 4) + dlmsMsg;
+                    messageBytes = Util.hexstr2Bytes(messageToSend);
                 }
                 default -> {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tipo de mensagem inválido: " + messageType);
@@ -205,16 +223,6 @@ public class GatewayController {
         UUID clientId = UUID.fromString(id);
         PlcGtwConnection client = tcpGatewayServer.getConnectedClients().get(clientId);
         return new ClientInfo(clientId.toString(), client.getConnectedAt(), client.getIp(), client.getMeterList());
-    }
-
-    @GetMapping("/history/{id}")
-    public List<MessageRecord> getHistory(@PathVariable String id) {
-        try {
-            UUID clientId = UUID.fromString(id);
-            return messageHistoryService.getMessages(clientId);
-        } catch (IllegalArgumentException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "ID inválido", e);
-        }
     }
 
     @PostMapping("/open-connections")

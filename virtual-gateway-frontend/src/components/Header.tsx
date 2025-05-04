@@ -1,4 +1,5 @@
 import { useTheme } from "../context/ThemeContext";
+import React from "react";
 import axios from "axios";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -26,7 +27,7 @@ export default function Header() {
         <div className="flex gap-4">
           <button
             onClick={() => setIsPopupOpen(true)}
-            className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-full transition"
+            className="btn border-none shadow-none bg-green-500 hover:bg-green-600 text-white rounded-full transition"
           >
             Abrir Ligações
           </button>
@@ -38,14 +39,14 @@ export default function Header() {
 
         <button
           onClick={resetConnections}
-          className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-full transition"
+          className=" btn border-none shadow-none bg-red-600 hover:bg-red-700 text-white rounded-full transition"
         >
           Reset Conexões
         </button>
 
         <button
           onClick={toggleTheme}
-          className={`px-4 py-2 ${isDarkMode ? 'bg-gray-100 hover:bg-white text-yellow-400' : 'bg-gray-800 hover:bg-gray-900 text-white'} rounded-full transition`}
+          className={` btn border-none shadow-none btn-circle ${isDarkMode ? 'bg-gray-100 hover:bg-white text-yellow-400' : 'bg-gray-800 hover:bg-gray-900 text-white'} transition`}
         >
           <i className={`fa-solid ${isDarkMode ? 'fa-sun' : 'fa-moon'}`}></i>
         </button>

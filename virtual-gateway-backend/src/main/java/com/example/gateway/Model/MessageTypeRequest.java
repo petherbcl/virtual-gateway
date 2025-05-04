@@ -2,7 +2,7 @@ package com.example.gateway.Model;
 
 public class MessageTypeRequest {
     private String id;
-    private MessageType type;
+    private String type;
     private String meterId;
 
     public MessageTypeRequest() {}
@@ -15,11 +15,11 @@ public class MessageTypeRequest {
         this.id = id;
     }
 
-    public MessageType getType() {
+    public String getType() {
         return type;
     }
 
-    public void setType(MessageType type) {
+    public void setType(String type) {
         this.type = type;
     }
 

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import React from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import Loading from "./Loading";
@@ -48,7 +49,7 @@ export default function OpenConnectionsPopup({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10">
+    <div className="fixed inset-0 bg-black/50  flex items-center justify-center z-10">
       { isLoading && <Loading /> }
 
       <div className="bg-white dark:bg-gray-800 p-6 rounded shadow-lg w-96 transform transition-all duration-300 ease-out scale-95 opacity-0 animate-fade-in">
@@ -62,19 +63,19 @@ export default function OpenConnectionsPopup({
             min={1}
             value={connections}
             onChange={(e) => setConnections(Math.max(1, Number(e.target.value)))}
-            className="w-full p-2 border rounded dark:text-gray-800"
+            className="w-full p-2 border rounded bg-white text-gray-800"
           />
         </div>
         <div className="flex justify-end gap-4">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded"
+            className="btn rounded-full border-none shadow-none bg-red-600 hover:bg-red-700 text-white"
           >
             Cancelar
           </button>
           <button
             onClick={handleConfirm}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded"
+            className="btn rounded-full border-none shadow-none bg-cyan-500 hover:bg-cyan-600 text-white"
           >
             Confirmar
           </button>
