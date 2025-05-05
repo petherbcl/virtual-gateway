@@ -8,6 +8,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,6 +33,9 @@ import com.example.gateway.Model.Util;
 @CrossOrigin
 public class GatewayController {
 
+    @Value("${tcp_port}")
+    private int port;
+
     @Autowired
     private TcpGatewayServer tcpGatewayServer;
 
@@ -46,6 +50,7 @@ public class GatewayController {
                 entry.getKey().toString(),
                 entry.getValue().getConnectedAt(),
                 entry.getValue().getIp(),
+                entry.getValue().getPort(),
                 entry.getValue().getMeterList().size()
         ))
                 .collect(Collectors.toList());
@@ -222,20 +227,21 @@ public class GatewayController {
     public ClientInfo getClientHistory(@PathVariable String id) {
         UUID clientId = UUID.fromString(id);
         PlcGtwConnection client = tcpGatewayServer.getConnectedClients().get(clientId);
-        return new ClientInfo(clientId.toString(), client.getConnectedAt(), client.getIp(), client.getMeterList());
+        return new ClientInfo(clientId.toString(), client.getConnectedAt(), client.getIp(), client.getPort(), client.getMeterList());
     }
 
     @PostMapping("/open-connections")
     public Map<String, String> openConnections(@RequestBody Map<String, Integer> request) {
         int count = request.getOrDefault("count", 1);
         String ip = "127.0.0.1";
-        int port = 12345;
         RestTemplate restTemplate = new RestTemplate();
 
         try {
-            for (int i = 0; i < count; i++) {
+            for (int i = 0; i < count; i++, port++) {
                 ip = generateRandomIP();
                 tcpGatewayServer.getIpList().add(ip);
+                tcpGatewayServer.setTcpPort(port);
+                tcpGatewayServer.start();
                 String url = String.format("http://localhost:8080/start-socket?ip=%s&port=%d", ip, port);
                 restTemplate.postForObject(url, null, String.class);
                 System.out.println("Conexão aberta com o IP: " + tcpGatewayServer.getIpList());

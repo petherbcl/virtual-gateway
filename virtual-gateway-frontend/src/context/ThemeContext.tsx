@@ -1,5 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import React from "react";
 import toast from "react-hot-toast";
+import {showToast} from "../components/ToastNofit";
 
 interface ThemeContextProps {
   isDarkMode: boolean;
@@ -19,7 +21,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setIsDarkMode(newMode);
     localStorage.setItem("darkMode", newMode.toString());
     document.documentElement.classList.toggle("dark", newMode);
-    toast.success(`Modo ${newMode ? "Escuro" : "Claro"} ativado!`);
+    showToast({title: "Tema", message: `Modo ${newMode ? "Escuro" : "Claro"} ativado!`, type: "info"})
+    // toast.success(`Modo ${newMode ? "Escuro" : "Claro"} ativado!`);
   };
 
   useEffect(() => {

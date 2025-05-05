@@ -6,11 +6,13 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import SockJS from "sockjs-client";
 import { Client as StompClient, Frame } from "@stomp/stompjs";
+import { showToast } from "./ToastNofit";
 
 interface Client {
   id: string;
   connectedAt: string;
   ip: string; // Novo campo para o IP
+  port: number; // Novo campo para a porta
   totalMeter: number; // Novo campo para o total de medidores
 }
 
@@ -29,7 +31,9 @@ export default function ClientsTable() {
       setClients(res.data);
     } catch (error) {
       console.error("Erro ao buscar clientes:", error);
-      toast.error("Não foi possível carregar lista de clientes.");
+      showToast({title: "Erro", message: "Não foi possível carregar lista de clientes!", type: "error"})
+      // toast.error("Não foi possível carregar lista de clientes.");
+
     }
   };
 
@@ -48,16 +52,19 @@ export default function ClientsTable() {
       stompClient.subscribe("/topic/clients", msg => {
         const data = JSON.parse(msg.body);
         if (data.type === "connected") {
-          toast.success(`Novo cliente: ${data.clientId}`);
+          showToast({title: "Novo Cliente", message: `Novo cliente: ${data.clientId}`, type: "success"})
+          // toast.success(`Novo cliente: ${data.clientId}`);
         } else if (data.type === "disconnected") {
-          toast.error(`Cliente saiu: ${data.clientId}`);
+          showToast({title: "Cliente Saiu", message: `Cliente saiu: ${data.clientId}`, type: "warning"})
+          // toast.error(`Cliente saiu: ${data.clientId}`);
         }
         fetchClients();
       });
     };
     stompClient.onStompError = frame => {
       console.error("STOMP error:", frame);
-      toast.error("Erro na ligação STOMP.");
+      showToast({title: "Erro", message: `Erro na ligação STOMP.`, type: "error"})
+      // toast.error("Erro na ligação STOMP.");
     };
 
     stompClient.activate();
@@ -87,11 +94,13 @@ export default function ClientsTable() {
   const closeClientSocket = async (id: string) => {
     try {
       await axios.post(`/api/clients/${id}/close`);
-      toast.success("Cliente desconectado com sucesso!");
+      showToast({title: "Sucesso", message: `Cliente desconectado com sucesso.`, type: "success"})
+      // toast.success("Cliente desconectado com sucesso!");
       fetchClients(); // Atualiza a lista de clientes
     } catch (error) {
       console.error("Erro ao desconectar cliente:", error);
-      toast.error("Erro ao desconectar cliente.");
+      showToast({title: "Erro", message: `Erro ao desconectar cliente.`, type: "error"})
+      // toast.error("Erro ao desconectar cliente.");
     }
   };
 
@@ -160,6 +169,11 @@ export default function ClientsTable() {
                 IP
               </th>
               <th
+                className="p-2"
+              >
+                Port
+              </th>
+              <th
                 className="cursor-pointer p-2"
                 onClick={() => {
                   setSortField("totalMeter");
@@ -195,6 +209,7 @@ export default function ClientsTable() {
                   >
                     <td className="p-2">{client.id}</td>
                     <td className="p-2">{client.ip}</td>
+                    <td className="p-2">{client.port}</td>
                     <td className="p-2">{client.totalMeter}</td>
                     <td className="p-2">{client.connectedAt}</td>
                     <td className="p-2">
@@ -217,7 +232,7 @@ export default function ClientsTable() {
                 ))
               ) : (
                 <tr className="bg-gray-100 dark:bg-gray-400">
-                  <td colSpan={6} className="text-center p-4 text-gray-400 dark:text-white">
+                  <td colSpan={7} className="text-center p-4 text-gray-400 dark:text-white">
                     Nenhum cliente encontrado.
                   </td>
                 </tr>

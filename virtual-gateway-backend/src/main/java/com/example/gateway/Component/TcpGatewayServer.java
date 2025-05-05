@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.example.gateway.Controller.WebSocketController;
@@ -23,21 +24,27 @@ import jakarta.annotation.PreDestroy;
 @Component
 public class TcpGatewayServer {
 
-    private final int TCP_PORT = 12345;
+    @Value("${tcp_port}")
+    private int TCP_PORT;
     private final int THREAD_POOL_SIZE = 1000;
     private final int DEFAULT_METER = 5;
     private final ConcurrentHashMap<UUID, PlcGtwConnection> connectedClients = new ConcurrentHashMap<>();
     private final List<String> ipMap = new ArrayList<>();
-    ServerSocket serverSocket = null;
+    // ServerSocket serverSocket = null;
+    List<ServerSocket> serverSocketList = new ArrayList<>();
 
     @PostConstruct
     public void start() {
+        System.out.println("Iniciando o servidor TCP na porta " + TCP_PORT + "...");
         ExecutorService pool = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
+
         new Thread(() -> {
-            
+            ServerSocket serverSocket = null;
             try {
                 // Cria o ServerSocket real
+                System.out.println("Criando o ServerSocket real...");
                 serverSocket = new ServerSocket(TCP_PORT);
+                serverSocketList.add(serverSocket);
                 System.out.println("Gateway TCP listening on port " + TCP_PORT);
 
                 while (true) {
@@ -48,7 +55,7 @@ public class TcpGatewayServer {
                     String clientIp = ipMap.get(ipRandom);
                     ipMap.remove(ipRandom);
 
-                    PlcGtwConnection plcGtwConnection = new PlcGtwConnection(clientSocket, clientIp);
+                    PlcGtwConnection plcGtwConnection = new PlcGtwConnection(clientSocket, clientIp, TCP_PORT);
                     int meterIdStart = plcGtwConnection.getMeterIdStart();
                     List<Meter> meterList = plcGtwConnection.getMeterList();
 
@@ -80,14 +87,16 @@ public class TcpGatewayServer {
     @PreDestroy
     public void stop() {
         System.out.println("Encerrando o servidor TCP...");
-        try {
-            if (serverSocket != null && !serverSocket.isClosed()) {
-                serverSocket.close();
-                System.out.println("ServerSocket fechado com sucesso.");
+        serverSocketList.forEach(serverSocket -> {
+            try {
+                if (serverSocket != null && !serverSocket.isClosed()) {
+                    serverSocket.close();
+                    System.out.println("ServerSocket fechado com sucesso.");
+                }
+            } catch (Exception e) {
+                System.err.println("Erro ao fechar o ServerSocket: " + e.getMessage());
             }
-        } catch (Exception e) {
-            System.err.println("Erro ao fechar o ServerSocket: " + e.getMessage());
-        }
+        });
     }
 
     private void handleClient(Socket clientSocket, UUID clientId) {
@@ -118,5 +127,10 @@ public class TcpGatewayServer {
 
     public List<String> getIpList() {
         return ipMap;
+    }
+
+    public void setTcpPort(int port) {
+        this.TCP_PORT = port;
+        System.out.println("TCP port updated to: " + this.TCP_PORT);
     }
 }

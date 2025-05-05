@@ -6,6 +6,7 @@ import SockJS from "sockjs-client";
 import { Client as StompClient, Frame } from "@stomp/stompjs";
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { showToast } from "./ToastNofit";
 
 interface MessageRecord {
   timestamp: string;
@@ -26,6 +27,7 @@ interface Client {
   id: string;
   connectedAt: string;
   ip: string;
+  port: number;
   meterList: Meter[]; // Lista de medidores
   totalMeter: number; // Total de medidores
 }
@@ -42,10 +44,12 @@ export default function ClientDetails() {
     try {
       setIsSending(true);
       await axios.post("/api/sendMessageType", { id, type, meterId });
-      toast.success(`Mensagem '${type}' enviada!`);
+      showToast({title: "Envio de Mensagem", message: `Mensagem '${type}' enviada.`, type: "success"})
+      // toast.success(`Mensagem '${type}' enviada!`);
     } catch (error) {
       console.error("Erro ao enviar mensagem:", error);
-      toast.error("Falha ao enviar mensagem.");
+      showToast({title: "Envio de Mensagem", message: `Falha ao enviar mensagem.`, type: "error"})
+      // toast.error("Falha ao enviar mensagem.");
     } finally {
       setIsSending(false);
     }
@@ -58,7 +62,8 @@ export default function ClientDetails() {
       setClient(res.data);
     } catch (error) {
       console.error("Erro ao buscar IP do cliente:", error);
-      toast.error("Não foi possível carregar o IP do cliente.");
+      showToast({title: "Erro", message: `Não foi possível carregar o IP do cliente.`, type: "error"})
+      // toast.error("Não foi possível carregar o IP do cliente.");
     }
   };
 
@@ -83,10 +88,12 @@ export default function ClientDetails() {
           if (event.clientId === id) {
             if (event.type === "disconnected") {
               setIsConnected(false);
-              toast.error("Cliente foi desligado!");
+              showToast({title: "Status Cliente", message: `Cliente foi desligado.`, type: "error"})
+              // toast.error("Cliente foi desligado!");
             } else if (event.type === "connected") {
               setIsConnected(true);
-              toast.success("Cliente voltou a ligar!");
+              showToast({title: "Status Cliente", message: `Cliente voltou a ligar.`, type: "success"})
+              // toast.success("Cliente voltou a ligar!");
             }
           }
         });
@@ -115,11 +122,13 @@ export default function ClientDetails() {
     if (!id) return;
     try {
       await axios.post(`/api/clients/${id}/close`);
-      toast.success("Cliente desconectado com sucesso!");
+      showToast({title: "Cliente Desconectado", message: `Cliente desconectado com sucesso.`, type: "success"})
+      // toast.success("Cliente desconectado com sucesso!");
       navigate("/"); // Redireciona para a lista de clientes
     } catch (error) {
       console.error("Erro ao desconectar cliente:", error);
-      toast.error("Erro ao desconectar cliente.");
+      showToast({title: "Cliente Desconectado", message: `Erro ao desconectar cliente.`, type: "error"})
+      // toast.error("Erro ao desconectar cliente.");
     }
   };
 
@@ -166,6 +175,11 @@ export default function ClientDetails() {
         <div className="stat place-items-center">
           <div className="stat-title text-lg dark:text-white">IP</div>
           <div className="stat-value text-lg">{client?.ip || "Carregando..."}</div>
+        </div>
+
+        <div className="stat place-items-center">
+          <div className="stat-title text-lg dark:text-white">PORT</div>
+          <div className="stat-value text-lg">{client?.port || "Carregando..."}</div>
         </div>
 
         <div className="stat place-items-center">

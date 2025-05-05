@@ -4,6 +4,7 @@ import axios from "axios";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import OpenConnectionsPopup from "./OpenConnectionsPopup";
+import {showToast} from "./ToastNofit"
 
 export default function Header() {
   const { isDarkMode, toggleTheme } = useTheme();
@@ -12,10 +13,12 @@ export default function Header() {
   const resetConnections = async () => {
     try {
       await axios.post("/api/resetConnections");
-      toast.success("Conexões resetadas com sucesso!");
+      showToast({title: "Sucesso", message: "Conexões resetadas com sucesso!", type: "success"})
+      // toast.success("Conexões resetadas com sucesso!");
     } catch (error) {
       console.error("Erro ao resetar conexões:", error);
-      toast.error("Erro ao resetar conexões.");
+      showToast({title: "Erro", message: "Erro ao resetar conexões!", type: "error"})
+      // toast.error("Erro ao resetar conexões.");
     }
   };
 

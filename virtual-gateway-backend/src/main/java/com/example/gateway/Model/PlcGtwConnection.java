@@ -11,16 +11,18 @@ public class PlcGtwConnection {
     private final Socket socket;
     private final String connectedAt;
     private final String ip;
+    private final int port;
 
     private final int meterIdStart = 10 + (new Random()).nextInt(30);
     private final List<Meter> meterList = new ArrayList<>();
 
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    public PlcGtwConnection(Socket socket, String ip) {
+    public PlcGtwConnection(Socket socket, String ip, int port) {
         this.socket = socket;
         this.connectedAt = LocalDateTime.now().format(formatter);
         this.ip = ip;
+        this.port = port;
     }
 
     public Socket getSocket() {
@@ -33,6 +35,10 @@ public class PlcGtwConnection {
 
     public String getIp() {
         return ip;
+    }
+
+    public int getPort() {
+        return port;
     }
 
     public List<Meter> getMeterList() {

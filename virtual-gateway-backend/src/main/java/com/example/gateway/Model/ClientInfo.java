@@ -7,20 +7,23 @@ public class ClientInfo {
     private String id;
     private String connectedAt;
     private String ip;
+    private int port;
     private int totalMeter;
     private final List<Meter> meterList = new ArrayList<>();
 
-    public ClientInfo(String id, String connectedAt, String ip, int totalMeter) {
+    public ClientInfo(String id, String connectedAt, String ip, int port, int totalMeter) {
         this.id = id;
         this.connectedAt = connectedAt;
         this.ip = ip;
+        this.port = port;
         this.totalMeter = totalMeter;
     }
 
-    public ClientInfo(String id, String connectedAt, String ip, List<Meter> meterList) {
+    public ClientInfo(String id, String connectedAt, String ip, int port, List<Meter> meterList) {
         this.id = id;
         this.connectedAt = connectedAt;
         this.ip = ip;
+        this.port = port;
         this.meterList.addAll(meterList);
         this.totalMeter = meterList.size();
     }
@@ -35,6 +38,10 @@ public class ClientInfo {
 
     public String getIp() {
         return ip;
+    }
+
+    public int getPort() {
+        return port;
     }
 
     public int getTotalMeter() {

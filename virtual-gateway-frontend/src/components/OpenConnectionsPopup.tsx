@@ -3,6 +3,7 @@ import React from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import Loading from "./Loading";
+import { showToast } from "./ToastNofit";
 
 interface OpenConnectionsPopupProps {
   isOpen: boolean;
@@ -29,7 +30,8 @@ export default function OpenConnectionsPopup({
       try {
         await Promise.race([request, timeout]);
       } catch (error) {
-        toast.error(`Erro ao abrir ligação ${index + 1}.`);
+        showToast({title: "Erro", message: `Erro ao abrir ligação ${index + 1}.`, type: "error"})
+        // toast.error(`Erro ao abrir ligação ${index + 1}.`);
       }
     };
 
