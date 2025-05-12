@@ -1,12 +1,26 @@
-# React + Vite
+# Virtual Gateway - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Este projecto é o frontend do Virtual Gateway, desenvolvido em **React** com **Vite**, que fornece uma interface para gerir e monitorizar conexões TCP.
 
-Currently, two official plugins are available:
+## 🛠️ Tecnologias usadas
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **React 18+**
+- **Vite**
+- **JavaScript/TypeScript**
+- **Axios** (para chamadas à API)
+- **WebSocket** (para actualizações em tempo real)
+- **CSS Modules** (para estilização)
 
-## Expanding the ESLint configuration
+## 🚀 Funcionalidades
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- **Visualização de conexões TCP activas**: Lista de clientes conectados ao backend.
+- **Envio de mensagens**: Interface para enviar mensagens para clientes conectados.
+- **Actualizações em tempo real**: Uso de WebSocket para reflectir mudanças instantaneamente.
+- **Gestão de conexões**: Controlo de conexões TCP directamente pela interface.
+
+## ⚙️ Como executar o projecto
+
+1. Certifique-se de ter o **Node.js 16+** instalado.
+2. Instale as dependências:
+   ```bash
+   npm install
