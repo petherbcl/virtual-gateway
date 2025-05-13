@@ -102,7 +102,7 @@ public class GatewayController {
             switch (messageType) {
                 case "NEW_DEVICE" -> {
                     // Adiciona um novo dispositivo à lista de medidores do cliente
-                    int newMeterId = client.getMeterIdStart() + client.getMeterList().size() + 1;
+                    int newMeterId = client.getMeterIdStart() + client.getMeterList().size();
                     meterRec = new Meter(newMeterId);
                     client.getMeterList().add(meterRec);
                     System.out.println("Novo dispositivo adicionado: " + meterRec);
